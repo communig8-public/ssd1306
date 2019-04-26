@@ -1,6 +1,34 @@
+
+// ssd1306.agent.lib.nut
+//
+// MIT License
+//
+// Copyright [2019] Tony Smith (@smittytone), CommuniG8, Richard Gate
+//
+// SPDX-License-Identifier: MIT
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+// EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
+// OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+
 // CLASS DEFINITION
 
 class SSD1306 {
+
     // Squirrel Class for Solomon SSD1306 OLED controller chip
     // [http://www.adafruit.com/datasheets/SSD1306.pdf]
     // As used on the Adafruit SSD1306 I2C breakout board
@@ -48,11 +76,11 @@ class SSD1306 {
     static SSD1306_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL = 0x2A;
     static SSD1306_WRITETOBUFFER = "\x40";
 
-	static HIGH = 1;
-	static LOW = 0;
+    static HIGH = 1;
+    static LOW = 0;
 
-	// Constants for the alphanumeric character set. Each character is
-	// a proportionally spaced bitmap rendered as 8-bit values
+    // Constants for the alphanumeric character set. Each character is
+    // a proportionally spaced bitmap rendered as 8-bit values
     static charset = [
         [0x00, 0x00],					// space - Ascii 32
         [0xfa],							// !
@@ -475,10 +503,10 @@ class SSD1306 {
 
 		if (printString == null || printString.len() == 0) return -1;
 
-		local ds = "\x40";
         local width = 0;
         local x = _pixelCursor_x;
         local y = _pixelCursor_y;
+        local ds = "";
 
         foreach (index, chr in printString) {
 
@@ -489,39 +517,13 @@ class SSD1306 {
     	    for (local j = 0 ; j < glyph.len() ; ++j) {
 
                 local c = _flip(glyph[j]);
-
-                for (local k = 0 ; k < 8 ; ++k) {
-                	local z = 0;
-                	if (((y + k) % 8) == 0 && k !=0 ) {
-                		z = 0;
-                	} else {
-                		++z;
-                	}
-    	        	local b = _coordsToIndex(x , y + k);
-    	        	local v = _gbuffer[b];
-    	        	local bit = c | (1 << z);
-    	        	if (bit != 0) v = v | (1 << z);
-    			}
-
-				x++;
-				if (x > 127) {
-					if (y + 8 < _oledHeight) {
-						x = 0;
-						y += 8;
-					} else {
-						break;
-					}
-				}
-
-        		//ds = ds + c.tochar();
+                ds = ds + c.tochar();
 
             }
 
-            //ds = ds + "\x00";
-
         }
 
-        if (onlyReturnWidth == false) draw(); // _i2c.write(_i2cAddress, ds);
+        if (!onlyReturnWidth) _i2c.write(_i2cAddress, "\x40" + ds + "\x00")
         return width;
 
 	}
