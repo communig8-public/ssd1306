@@ -26,7 +26,7 @@
 
 // CLASS DEFINITION
 
-class SSD1306Pro {
+class SSD1306 {
 	// Squirrel Class for Solomon SSD1306 OLED controller chip
 	// [http://www.adafruit.com/datasheets/SSD1306.pdf]
 	// As used on the Adafruit SSD1306 I2C breakout board
