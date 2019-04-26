@@ -1,29 +1,3 @@
-// ssd1306.agent.lib.nut
-//
-// MIT License
-//
-// Copyright [2019] Tony Smith (@smittytone), CommuniG8, Richard Gate
-//
-// SPDX-License-Identifier: MIT
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be
-// included in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
-// EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
-// OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-// OTHER DEALINGS IN THE SOFTWARE.
-
 // CLASS DEFINITION
 
 class SSD1306 {
@@ -76,7 +50,6 @@ class SSD1306 {
 
 	static HIGH = 1;
 	static LOW = 0;
-	static ALPHA_COUNT = 96;
 
 	// Constants for the alphanumeric character set. Each character is
 	// a proportionally spaced bitmap rendered as 8-bit values
@@ -245,24 +218,33 @@ class SSD1306 {
 
         //  Toggle the RST pin over 1ms + 10ms
 		if (_rst != null) {
-	  	_rst.write(HIGH);
-	    imp.sleep(0.001);
-	    _rst.write(LOW);
-	    imp.sleep(0.01);
-		_rst.write(HIGH);
+    	  	_rst.write(HIGH);
+    	    imp.sleep(0.001);
+    	    _rst.write(LOW);
+    	    imp.sleep(0.01);
+    		_rst.write(HIGH);
 	    }
+
+	    // Set values for 32 vs 64 height displays
+	    local cp = "\x02";
+	    local mx = "\x1F";
+	    if (_oledHeight == 64) {
+	        cp = "\x12";
+	        mx = "\x3F";
+	    }
+
 
         // Write the display settings
         _i2c.write(_i2cAddress, "\x00" + SSD1306_DISPLAYOFF);
         _i2c.write(_i2cAddress, "\x00" + SSD1306_SETDISPLAYCLOCKDIV + "\x80");
-        _i2c.write(_i2cAddress, "\x00" + SSD1306_SETMULTIPLEX + "\x1F");
+        _i2c.write(_i2cAddress, "\x00" + SSD1306_SETMULTIPLEX + mx);
         _i2c.write(_i2cAddress, "\x00" + SSD1306_SETDISPLAYOFFSET + "\x00");
         _i2c.write(_i2cAddress, "\x00" + SSD1306_SETSTARTLINE);
         _i2c.write(_i2cAddress, "\x00" + SSD1306_CHARGEPUMP + "\x14");
         _i2c.write(_i2cAddress, "\x00" + SSD1306_MEMORYMODE + "\x00"); // Horizontal addressing mode
         _i2c.write(_i2cAddress, "\x00" + SSD1306_SEGREMAP);
         _i2c.write(_i2cAddress, "\x00" + SSD1306_COMSCANDEC);
-        _i2c.write(_i2cAddress, "\x00" + SSD1306_SETCOMPINS + "\x02");
+        _i2c.write(_i2cAddress, "\x00" + SSD1306_SETCOMPINS + cp);
         _i2c.write(_i2cAddress, "\x00" + SSD1306_SETCONTRAST + "\x8F");
         _i2c.write(_i2cAddress, "\x00" + SSD1306_SETPRECHARGE + "\xF1");
         _i2c.write(_i2cAddress, "\x00" + SSD1306_SETVCOMDETECT + "\x40");
@@ -275,19 +257,18 @@ class SSD1306 {
 
         // Home the cursor (0,0 - top left)
         local c = "\x03";
-      	if (_oledHeight == 64) c = "\x07";_i2c.write(_i2cAddress, "\x00" + SSD1306_COLUMNADDR + "\x00" + (_oledWidth - 1).tochar());
+      	if (_oledHeight == 64) c = "\x07";
+      	_i2c.write(_i2cAddress, "\x00" + SSD1306_COLUMNADDR + "\x00" + (_oledWidth - 1).tochar());
         _i2c.write(_i2cAddress, "\x00" + SSD1306_PAGEADDR + "\x00" + c);
 
 	}
 
     function clear() {
-
         // Clears the display buffer by creating a new one
         // Squirrel garbage collection deals with the old buffer
         _gbuffer = blob(_oledWidth * (_oledHeight / 8));
         return this;
-
-  }
+    }
 
     function plot(x, y, color = 1) {
 
@@ -341,51 +322,51 @@ class SSD1306 {
 
 	function circle(x, y, radius, color = 1, fill = false) {
 
-    for (local i = 0 ; i < 180 ; i++) {
+        for (local i = 0 ; i < 180 ; i++) {
 
-      local a = x - (radius * SIN_TABLE[i]).tointeger();
-      local b = y - (radius * COS_TABLE[i]).tointeger();
+            local a = x - (radius * SIN_TABLE[i]).tointeger();
+            local b = y - (radius * COS_TABLE[i]).tointeger();
 
-      if (a >= 0 && a <_oledWidth && b >=0 && b < _oledHeight) {
-          plot(a , b, color);
-
-            if (fill) {
-                if (a > x) {
-                    local j = x;
-                    do {
-                        plot(j, b, color);
-                        j++;
-                    } while (j < a);
-                } else {
-                    local j = a + 1;
-                    do {
-                        plot(j, b, color);
-                        j++;
-                    } while (j <= x);
+            if (a >= 0 && a <_oledWidth && b >=0 && b < _oledHeight) {
+                plot(a , b, color);
+                if (fill) {
+                    if (a > x) {
+                        local j = x;
+                        do {
+                            plot(j, b, color);
+                            j++;
+                        } while (j < a);
+                    } else {
+                        local j = a + 1;
+                        do {
+                            plot(j, b, color);
+                            j++;
+                        } while (j <= x);
+                    }
                 }
             }
-        }
-    }
 
-    return this;
+        }
+
+        return this;
 
 	}
 
-    function rect(x, y, width, height, fill = false) {
+    function rect(x, y, width, height, color = 1, fill = false) {
 
   	    if (!fill) {
 
 			// Just present the frame
 			for (local i = x ; i < x + width ; ++i) {
 				if (i < _oledWidth) {
-					plot(i, y, 1);
-					if (y + height < _oledHeight) plot(i, y + height, 1);
+					plot(i, y, color);
+					if (y + height < _oledHeight) plot(i, y + height, color);
 				}
 			}
 			for (local i = y ; i < y + height ; ++i) {
 				if (i < _oledHeight) {
-					plot(x, i, 1);
-					if (x + width < _oledWidth) plot(x + width, i, 1);
+					plot(x, i, color);
+					if (x + width < _oledWidth) plot(x + width, i, color);
 				}
 			}
 
@@ -396,7 +377,7 @@ class SSD1306 {
 					for (local i = x ; i < x + width ; ++i) {
 						if (i < _oledWidth) {
 							if (fill) {
-								plot(i, j, 1);
+								plot(i, j, color);
 							} else {
 								if (j == y || j == y + height - 1 || i == x || i == x + width - 1) { }
 							}
