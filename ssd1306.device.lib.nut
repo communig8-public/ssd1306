@@ -504,9 +504,7 @@ class SSD1306 {
 		if (printString == null || printString.len() == 0) return -1;
 
         local width = 0;
-        local x = _pixelCursor_x;
-        local y = _pixelCursor_y;
-        local ds = "";
+        local i = _coordsToIndex(_pixelCursor_x,_pixelCursor_y);
 
         foreach (index, chr in printString) {
 
@@ -517,13 +515,13 @@ class SSD1306 {
     	    for (local j = 0 ; j < glyph.len() ; ++j) {
 
                 local c = _flip(glyph[j]);
-                ds = ds + c.tochar();
+                _gbuffer[i++] = c;
 
             }
 
         }
 
-        if (!onlyReturnWidth) _i2c.write(_i2cAddress, "\x40" + ds + "\x00")
+        if (!onlyReturnWidth) draw();
         return width;
 
 	}
